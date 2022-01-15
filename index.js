@@ -21,9 +21,8 @@ async function run() {
         await client.connect();
         const database = client.db("doctor-patient-management");
         const usersCollection = database.collection('users');
-        const bookingCollection = database.collection("bookings");
-        const serviceCollection = database.collection("services");
-        const reviewCollection = database.collection("review");
+        const patientsCollection = database.collection('patients');
+        const doctorsCollection = database.collection('doctors');
 
         app.get('/users', async (req, res) => {
             const cursor = usersCollection.find({});
@@ -31,7 +30,8 @@ async function run() {
             res.send(users);
         });
 
-        app.post('/users', async (req, res) => {
+        app.post('/patients', async (req, res) => {
+            console.log(req.body);
             const name = req.body.name;
             const email = req.body.email;
             const role = req.body.role;
@@ -47,7 +47,27 @@ async function run() {
                 dateOfBirth,
                 image: imageBuffer
             }
-            const result = await usersCollection.insertOne(user);
+            const result = await patientsCollection.insertOne(user);
+            res.json(result)
+        });
+        app.post('/doctors', async (req, res) => {
+            console.log(req.body);
+            const name = req.body.name;
+            const email = req.body.email;
+            const role = req.body.role;
+            const dateOfBirth = req.body.dateOfBirth;
+            const pic = req.files.image;
+            const picData = pic.data;
+            const encodedPic = picData.toString('base64');
+            const imageBuffer = Buffer.from(encodedPic, 'base64');
+            const user = {
+                name,
+                email,
+                role,
+                dateOfBirth,
+                image: imageBuffer
+            }
+            const result = await doctorsCollection.insertOne(user);
             res.json(result)
         });
 
@@ -59,6 +79,13 @@ async function run() {
             const updateDoc = { $set: user };
             const result = await usersCollection.updateOne(filter, updateDoc, options);
             res.json(result);
+        });
+
+        app.get('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const user = await usersCollection.findOne(query);
+            res.send(user);
         });
 
 
